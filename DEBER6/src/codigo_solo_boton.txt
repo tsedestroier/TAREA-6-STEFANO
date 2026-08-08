@@ -1,0 +1,110 @@
+#include <Arduino.h>
+#include <WiFi.h> // Necesario para gestionar el Modem Sleep
+
+#define PIN_LED_R 25
+#define PIN_LED_G 26
+#define PIN_LED_B 27
+// Usamos el GPIO 4 que está configurado en el JSON
+#define PIN_BOTON_DESPERTAR GPIO_NUM_4
+
+int conteoDespertares = 0;
+volatile bool botonPresionado = false;
+
+// Rutina de interrupción tradicional (Siempre funciona en Wokwi)
+void IRAM_ATTR botonISR() {
+    botonPresionado = true;
+}
+
+void configurarPines() {
+    pinMode(PIN_LED_R, OUTPUT);
+    pinMode(PIN_LED_G, OUTPUT);
+    pinMode(PIN_LED_B, OUTPUT);
+    
+    // Configuración del botón
+    pinMode(PIN_BOTON_DESPERTAR, INPUT_PULLUP);
+    
+    // Interrupción clásica de Arduino (FALLING = cuando presionas y va a tierra)
+    attachInterrupt(digitalPinToInterrupt(PIN_BOTON_DESPERTAR), botonISR, FALLING);
+}
+
+void colorLED(bool r, bool g, bool b) {
+    digitalWrite(PIN_LED_R, r ? HIGH : LOW);
+    digitalWrite(PIN_LED_G, g ? HIGH : LOW);
+    digitalWrite(PIN_LED_B, b ? HIGH : LOW);
+}
+
+void tareaActiva() {
+    Serial.println("\n======================================");
+    Serial.printf("Despertar número: %d\n", ++conteoDespertares);
+    
+    if (conteoDespertares > 1) {
+        Serial.println("Causa de despertar: Interrupción Externa (Botón WAKE)");
+    } else {
+        Serial.println("Causa de despertar: Encendido inicial");
+    }
+    
+    Serial.println("Iniciando tarea activa (CPU a 240MHz, WiFi encendido)...");
+    
+    // Simulamos que el WiFi está encendido mientras procesa
+    WiFi.mode(WIFI_STA);
+    
+    // Indicador visual de encendido (Azul)
+    colorLED(false, false, true);
+    delay(1000);
+    
+    // Simular procesamiento de datos
+    for (int i = 0; i < 3; i++) {
+        colorLED(false, true, false); // Verde
+        Serial.println("Procesando datos...");
+        delay(500);
+        colorLED(false, false, false);
+        delay(500);
+    }
+    
+    Serial.println("Tarea finalizada. Preparando para modo de bajo consumo.");
+}
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000); 
+    
+    configurarPines();
+    Serial.println("\n--- SISTEMA DE GESTIÓN DE ENERGÍA INICIADO ---");
+}
+
+void loop() {
+    // 1. Ejecutar la tarea activa (CPU Rápida)
+    setCpuFrequencyMhz(240); // Velocidad máxima
+    tareaActiva();
+    
+    // 2. Transición al modo de ahorro (Indicador Rojo)
+    colorLED(true, false, false);
+    delay(1000);
+    colorLED(false, false, false); // Apagar LED
+    
+    // ------------------------------------------------------------------
+    // AHORRO DE ENERGÍA: MODEM SLEEP (Modo permitido en el PDF)
+    // ------------------------------------------------------------------
+    Serial.println("Entrando en Modem Sleep...");
+    Serial.println("Apagando radio WiFi y bajando frecuencia de la CPU...");
+    
+    // Apagamos el módem (Ahorra ~100mA)
+    WiFi.mode(WIFI_OFF);
+    // Bajamos la frecuencia al mínimo soportado para ahorrar energía extra
+    setCpuFrequencyMhz(80); 
+    
+    // Nota para el informe: Si usáramos Deep Sleep real de ESP-IDF, usaríamos esto:
+    // esp_sleep_enable_ext0_wakeup(PIN_BOTON_DESPERTAR, 0);
+
+    Serial.println("El sistema está inactivo. SOLO despertará cuando presiones el botón.");
+    Serial.println("ZZZzzz...");
+    
+    // Bucle de reposo: La CPU gasta la mínima energía en delay() hasta que se interrumpe
+    while (!botonPresionado) {
+        delay(100); 
+    }
+    
+    // Al presionar el botón, salimos del bucle y restauramos todo
+    Serial.println("\n¡Despertando por botón físico! Restaurando CPU y Módem...");
+    botonPresionado = false; // Reiniciamos la bandera
+}

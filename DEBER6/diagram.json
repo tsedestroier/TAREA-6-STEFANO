@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "author": "Stefano",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-rgb-led",
+      "id": "rgb1",
+      "top": -92,
+      "left": 39.5,
+      "attrs": {
+        "common": "cathode"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 6.2,
+      "left": -115.2,
+      "attrs": {
+        "color": "green",
+        "label": "WAKE"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -35,
+      "left": -77.65,
+      "rotate": 180,
+      "attrs": {
+        "value": "10000"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "esp:25",
+      "rgb1:R",
+      "red",
+      [
+        "h43.39",
+        "v-153.6"
+      ]
+    ],
+    [
+      "esp:26",
+      "rgb1:G",
+      "green",
+      [
+        "h62.59",
+        "v-115.2",
+        "h-1.3"
+      ]
+    ],
+    [
+      "esp:27",
+      "rgb1:B",
+      "blue",
+      [
+        "h72.19",
+        "v-67.2",
+        "v-105.6"
+      ]
+    ],
+    [
+      "esp:GND.1",
+      "rgb1:COM",
+      "magenta",
+      [
+        "h52.99",
+        "v-191.6"
+      ]
+    ],
+    [
+      "esp:4",
+      "btn1:1.l",
+      "green",
+      [
+        "h-158.21",
+        "v-76.8"
+      ]
+    ],
+    [
+      "esp:GND.2",
+      "btn1:2.l",
+      "black",
+      [
+        "h-139.16",
+        "v57.6",
+        "h-76.8"
+      ]
+    ],
+    [
+      "r1:1",
+      "esp:3V3",
+      "red",
+      [
+        "h28.25",
+        "v58.45"
+      ]
+    ],
+    [
+      "r1:2",
+      "esp:4",
+      "green",
+      [
+        "v-8.75",
+        "h-76.15",
+        "v57.6"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}
